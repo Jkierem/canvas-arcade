@@ -1,25 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
 import Canvas from './components/Canvas'
-
-function getRandomColor() {
-  const letters = '0123456789ABCDEF';
-  let color = "#";
-  for (var i = 0; i < 6; i++) {
-    color = `${color}${letters[Math.floor(Math.random() * 16)]}`
-  }
-  return color;
-}
-
-const createDemoScript = ( color ) => {
-  return ( canvasRef ) => {
-    const cvs = canvasRef.current;
-    const ctx = cvs.getContext("2d");
-    ctx.rect( 0 , 0 , cvs.width , cvs.height );
-    ctx.fillStyle = color || "red" ;
-    ctx.fill( );
-  }
-}
+import Engine from './engine';
+import { getMockEngine } from './demo'
 
 const Container = styled.div`
   display: grid;
@@ -61,10 +44,9 @@ class App extends React.Component {
 
   generateCanvas = ( n ) => {
     const { cvsRefs } = this;
-
+    const engineIt = getMockEngine( );
     if( this.cvsRefs.length === 0){
       for( let i = 0 ; i < n ; i++ ){
-        const color = getRandomColor( );
         const currentRef = React.createRef( );
         cvsRefs.push({
           ref: currentRef,
@@ -73,7 +55,7 @@ class App extends React.Component {
               key={ i }
               index = { i }
               ref = { currentRef }
-              engine={ { thumbnail: createDemoScript( color )} }
+              engine={ i === 12 ? new Engine( ) : engineIt.next( ).value }
               onClick={ this.handleClick }
             />
           )

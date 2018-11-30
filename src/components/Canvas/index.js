@@ -1,27 +1,28 @@
 import React from 'react'
 import styled from 'styled-components'
 
-
 const CanvasComponent = styled.canvas`
   width: 90px;
   height: 90px;
-  transition: width 2s , height 2s , margin 2s;
-  margin: 10px;
-  display: ${ props => props.width === 0 ? "none" : "block"};
+  transition: width 1s , height 1s , margin 1s;
 `
 
-class Canvas extends React.Component {
+class Canvas extends React.PureComponent {
 
   constructor(props){
     super(props);
-    this.state = {}
+    this.state = {
+      width: "90",
+      height: "90",
+      visible: true,
+    }
     this.arcadeCanvas = React.createRef( )
   }
 
   componentDidMount = ( ) => {
     const { engine } = this.props;
     if( engine ){
-      engine.thumbnail( this.arcadeCanvas );
+      engine.onThumbnail( this.arcadeCanvas.current );
     }
   }
 
@@ -43,18 +44,27 @@ class Canvas extends React.Component {
   }
 
   grow = ( ) => {
-    this.changeSize( "100vw" , "100vh" );
-    this.changeMargin("0");
+    this.setState({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    }, () => {
+      this.props.engine.onThumbnail( this.arcadeCanvas.current )
+      this.changeSize( "100vw" , "100vh" );
+    })
   }
 
   shrink = ( ) => {
     this.changeSize( "0px" , "0px" );
-    this.changeMargin("0");
   }
 
   reset = ( ) => {
-    this.changeSize( "90px" , "90px" );
-    this.changeMargin("10px");
+    this.setState({
+      width: "90",
+      height: "90",
+    },() => {
+      this.changeSize( "90px" , "90px" );
+      this.props.engine.onThumbnail( this.arcadeCanvas.current )
+    })
   }
 
   render(){
@@ -62,6 +72,8 @@ class Canvas extends React.Component {
       <CanvasComponent
         ref={ this.arcadeCanvas }
         onClick={ this.handleClick }
+        width = { this.state.width }
+        height = { this.state.height }
       />
     )
   }
