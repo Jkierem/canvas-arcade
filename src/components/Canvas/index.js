@@ -16,6 +16,7 @@ class Canvas extends React.PureComponent {
       height: "90",
       visible: true,
     }
+    this.timeoutID = undefined;
     this.arcadeCanvas = React.createRef( )
   }
 
@@ -39,25 +40,31 @@ class Canvas extends React.PureComponent {
     this.arcadeCanvas.current.style.height = height;
   }
 
-  changeMargin = ( value ) => {
-    this.arcadeCanvas.current.style.margin = value;
-  }
-
   grow = ( ) => {
+    const { engine } = this.props
     this.setState({
       width: window.innerWidth,
       height: window.innerHeight,
     }, () => {
-      this.props.engine.onThumbnail( this.arcadeCanvas.current )
+      engine.onThumbnail( this.arcadeCanvas.current )
       this.changeSize( "100vw" , "100vh" );
+      this.timeoutID = window.setTimeout( ( ) => {
+        engine.onLoad( this.arcadeCanvas.current )
+      } , 1100 );
     })
   }
 
   shrink = ( ) => {
+    if( this.timeoutID ){
+      window.clearTimeout( this.timeoutID );
+    }
     this.changeSize( "0px" , "0px" );
   }
 
   reset = ( ) => {
+    if( this.timeoutID ){
+      window.clearTimeout( this.timeoutID );
+    }
     this.setState({
       width: "90",
       height: "90",

@@ -1,9 +1,20 @@
+const defaultSettings = {
+  interactionEngine: undefined,
+  options: {
+    frame: 0,
+    keyFrame: undefined,
+    isAnimated: false,
+  }
+}
+
 export default class Engine {
 
-  constructor( interactionEngine ){
-    this.keyFrame = null;
-    this.interactionEngine = interactionEngine;
-    this.frame = 0;
+  constructor( settings = defaultSettings ){
+    this.interactionEngine = settings.interactionEngine;
+    const { options } = settings;
+    this.frame = options.frame;
+    this.keyFrame = options.keyFrame;
+    this.isAnimated = options.isAnimated;
   }
 
   onThumbnail = ( cvs ) => {
@@ -13,23 +24,16 @@ export default class Engine {
     ctx.stroke();
   }
 
-  beforeStart = ( ctx ) => {
-
+  onClear = ( cvs ) => {
+    const ctx = cvs.getContext("2d");
+    ctx.clearRect(0,0,cvs.width,cvs.height)
   }
 
-  onStart = ( ctx ) => {
-
+  onLoad = ( cvs ) => {
+    this.onClear( cvs )
   }
 
-  tick = ( ctx ) => {
-
-  }
-
-  beforeEnd = ( ctx ) => {
-
-  }
-
-  onEnd = ( ctx ) => {
+  onTick = ( cvs ) => {
 
   }
 
