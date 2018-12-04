@@ -14,7 +14,6 @@ class Canvas extends React.PureComponent {
     this.state = {
       width: "90",
       height: "90",
-      visible: true,
     }
     this.timeoutID = undefined;
     this.arcadeCanvas = React.createRef( )
@@ -29,10 +28,8 @@ class Canvas extends React.PureComponent {
 
   handleClick = ( e ) => {
     e.preventDefault( )
-    const { onClick , index } = this.props;
-    if( onClick ){
-      onClick( index , this.arcadeCanvas );
-    }
+    const { index } = this.props;
+    this.props.engine.onClick( index , this.arcadeCanvas );
   }
 
   changeSize = ( width , height ) => {
@@ -45,11 +42,12 @@ class Canvas extends React.PureComponent {
     this.setState({
       width: window.innerWidth,
       height: window.innerHeight,
-    }, () => {
+    }, ( ) => {
       engine.onThumbnail( this.arcadeCanvas.current )
       this.changeSize( "100vw" , "100vh" );
       this.timeoutID = window.setTimeout( ( ) => {
         engine.onLoad( this.arcadeCanvas.current )
+        engine.onStart( this.arcadeCanvas.current )
       } , 1100 );
     })
   }
@@ -65,10 +63,11 @@ class Canvas extends React.PureComponent {
     if( this.timeoutID ){
       window.clearTimeout( this.timeoutID );
     }
+    this.props.engine.onCleanUp( this.arcadeCanvas.current );
     this.setState({
       width: "90",
       height: "90",
-    },() => {
+    }, ( ) => {
       this.changeSize( "90px" , "90px" );
       this.props.engine.onThumbnail( this.arcadeCanvas.current )
     })

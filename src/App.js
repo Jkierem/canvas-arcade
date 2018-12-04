@@ -1,8 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import Canvas from './components/Canvas'
-import Engine from './engine';
-import { getMockEngine } from './demo'
+import Loader from './resources/loader'
 
 const Container = styled.div`
   display: grid;
@@ -18,57 +17,65 @@ class App extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      reverse: false,
+      selected: -1,
     }
-    this.cvsRefs = []
+    this.canvasRefs = []
+    this.loader = Loader( )
   }
 
-  handleClick = ( index , canvasRef ) => {
-    this.setState({ reverse : !this.state.reverse })
-    this.cvsRefs.forEach( ({ ref } , i ) => {
+  handleSelect = ( index ) => {
+    this.setState({ selected: index })
+    this.canvasRefs.forEach( ( ref , i ) => {
       if( i === index ){
-        if( this.state.reverse ){
-          ref.current.reset( )
-        }else{
-          ref.current.grow( )
-        }
-      }else{
-        if( this.state.reverse ){
-          ref.current.reset( )
-        }else{
-          ref.current.shrink( )
-        }
+        ref.current.grow( );
+      } else {
+        ref.current.shrink( );
       }
     })
   }
 
-  generateCanvas = ( n ) => {
-    const { cvsRefs } = this;
-    const engineIt = getMockEngine( );
-    if( this.cvsRefs.length === 0){
-      for( let i = 0 ; i < n ; i++ ){
-        const currentRef = React.createRef( );
-        cvsRefs.push({
-          ref: currentRef,
-          component: (
-            <Canvas
-              key={ i }
-              index = { i }
-              ref = { currentRef }
-              engine={ i === 12 ? new Engine( ) : engineIt.next( ).value }
-              onClick={ this.handleClick }
-            />
-          )
-        })
-      }
+  handleReset = ( ) => {
+    this.setState({ selected: -1 })
+    this.canvasRefs.forEach( ( ref , i ) => {
+      ref.current.reset( );
+    })
+  }
+
+  handleClick = ( index ) => {
+    if( this.state.selected < 0 ){
+      this.handleSelect( index )
+    }else{
+      this.handleReset( );
     }
-    return cvsRefs.map( (obj) => obj.component );
+  }
+
+  generateCanvas = ( ) => {
+    this.canvasRefs = []
+    const interaction = {
+      onClick: this.handleClick,
+    }
+    const scripts = this.loader.getScripts( );
+    return scripts.map( ( script , index ) => {
+      const currentRef = React.createRef( );
+      const canvasComponent = (
+        <Canvas
+          key={ index }
+          index = { index }
+          ref = { currentRef }
+          engine={ script.getEngine({
+            interaction,
+          }) }
+        />
+      )
+      this.canvasRefs = [ ...this.canvasRefs , currentRef ]
+      return canvasComponent
+    })
   }
 
   render(){
     return (
       <Container>
-        { this.generateCanvas( 25 ) }
+        { this.generateCanvas( ) }
       </Container>
     )
   }

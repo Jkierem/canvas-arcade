@@ -1,4 +1,3 @@
-import Engine from '../engine';
 import Color from './Color'
 
 const generateFade = ( startColor , endColor , steps=10 ) => {
@@ -15,8 +14,6 @@ const generateFade = ( startColor , endColor , steps=10 ) => {
   return colors;
 }
 
-const gradient = generateFade( new Color(255,0,0) , new Color(0,0,255) , 25 );
-
 const createDemoScript = ( color ) => {
   return ( cvs ) => {
     const ctx = cvs.getContext("2d");
@@ -26,10 +23,9 @@ const createDemoScript = ( color ) => {
   }
 }
 
-export function* getMockEngine( ){
+export function* getDemoScript( ){
+  const gradient = generateFade( new Color(255,0,0) , new Color(0,0,255) , 25 );
   for ( let i = 0 ; i < 25 ; i++ ){
-    const eng = new Engine( );
-    eng.onThumbnail = createDemoScript( gradient[i] );
-    yield eng;
+    yield createDemoScript( gradient[i] );
   }
 }
