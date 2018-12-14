@@ -1,6 +1,4 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import App from './App';
+import injectToDOM from './inject'
+import App from './App'
 
-ReactDOM.render(<App />, document.getElementById('root'));
-
+injectToDOM( document.getElementById("root") , App)

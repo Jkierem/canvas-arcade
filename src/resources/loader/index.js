@@ -1,5 +1,5 @@
-import Engine from '../engine'
-import BouncingBalls from '../bouncingBalls'
+import createEngine from '../engine'
+import createBouncingBalls from '../bouncingBalls'
 import { getDemoScript } from '../../demo'
 
 const Loader = ( ) => {
@@ -11,14 +11,14 @@ const Loader = ( ) => {
     for ( let i = 0 ; i < 25 ; i++ ){
       scripts.push({
         getEngine( settings ){
-          const eng = new Engine( settings );
-          eng.onThumbnail = demoIterator.next( ).value ;
-          return eng;
+          return createEngine({
+            onThumbnail: demoIterator.next( ).value
+          });
         }
       });
     }
 
-    scripts[ 12 ] =  { getEngine( settings ){ return new BouncingBalls( settings ) } };
+    scripts[ 12 ] =  { getEngine( ){ return createBouncingBalls( ) } };
     return scripts
   }
 

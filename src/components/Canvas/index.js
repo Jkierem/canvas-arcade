@@ -1,89 +1,122 @@
-import React from 'react'
-import styled from 'styled-components'
+import { DOM } from '../../inject'
+import { ON_LOAD , ON_START , ON_THUMBNAIL , ON_CLEAN_UP } from './constants'
+import createState from '../../resources/createState'
+import './style.scss'
 
-const CanvasComponent = styled.canvas`
-  width: 90px;
-  height: 90px;
-  transition: width 1s , height 1s , margin 1s;
-`
-
-class Canvas extends React.PureComponent {
-
-  constructor(props){
-    super(props);
-    this.state = {
-      width: "90",
-      height: "90",
-    }
-    this.timeoutID = undefined;
-    this.arcadeCanvas = React.createRef( )
-  }
-
-  componentDidMount = ( ) => {
-    const { engine } = this.props;
-    if( engine ){
-      engine.onThumbnail( this.arcadeCanvas.current );
-    }
-  }
-
-  handleClick = ( e ) => {
-    e.preventDefault( )
-    const { index } = this.props;
-    this.props.engine.onClick( index , this.arcadeCanvas );
-  }
-
-  changeSize = ( width , height ) => {
-    this.arcadeCanvas.current.style.width = width;
-    this.arcadeCanvas.current.style.height = height;
-  }
-
-  grow = ( ) => {
-    const { engine } = this.props
-    this.setState({
-      width: window.innerWidth,
-      height: window.innerHeight,
-    }, ( ) => {
-      engine.onThumbnail( this.arcadeCanvas.current )
-      this.changeSize( "100vw" , "100vh" );
-      this.timeoutID = window.setTimeout( ( ) => {
-        engine.onLoad( this.arcadeCanvas.current )
-        engine.onStart( this.arcadeCanvas.current )
-      } , 1100 );
-    })
-  }
-
-  shrink = ( ) => {
-    if( this.timeoutID ){
-      window.clearTimeout( this.timeoutID );
-    }
-    this.changeSize( "0px" , "0px" );
-  }
-
-  reset = ( ) => {
-    if( this.timeoutID ){
-      window.clearTimeout( this.timeoutID );
-    }
-    this.props.engine.onCleanUp( this.arcadeCanvas.current );
-    this.setState({
-      width: "90",
-      height: "90",
-    }, ( ) => {
-      this.changeSize( "90px" , "90px" );
-      this.props.engine.onThumbnail( this.arcadeCanvas.current )
-    })
-  }
-
-  render(){
-    return (
-      <CanvasComponent
-        ref={ this.arcadeCanvas }
-        onClick={ this.handleClick }
-        width = { this.state.width }
-        height = { this.state.height }
-      />
-    )
-  }
-
+const callEngineFunction = ( name ) => ( engine , ...args ) => {
+  typeof engine[name] === "function" ?
+  engine[name](...args)
+  :
+  console.warn(`No ${name} function defined on engine`)
 }
 
-export default Canvas;
+const callOnLoad = callEngineFunction(ON_LOAD)
+const callOnStart = callEngineFunction(ON_START)
+const callOnThumbnail = callEngineFunction(ON_THUMBNAIL)
+const callOnCleanUp = callEngineFunction(ON_CLEAN_UP)
+
+const toggleClass = className => domNode => domNode.classList.toggle(className)
+const toggleCanvasShrink = toggleClass("canvas--shrink")
+const toggleCanvasGrow = toggleClass("canvas--grow")
+const resetClasses = (cvs) => {
+  if( cvs.classList.contains("canvas--grow") ){ toggleCanvasGrow(cvs) }
+  if( cvs.classList.contains("canvas--shrink") ){ toggleCanvasShrink(cvs) }
+}
+
+const setSize = ( width , height ) => ( domNode ) => {
+  domNode.width = width;
+  domNode.height = height;
+}
+const setGrowSize = (cvs) => setSize( window.innerWidth , window.innerHeight )(cvs)
+const setDefaultSize = setSize( "90" , "90" )
+
+const createHandleMount = ( getState , setState ) => function( ){
+  const { props , domNode } = getState( )
+  callOnThumbnail( props.engine , domNode );
+}
+
+const createHandleReset = ( getState , setState ) => function( ){
+  const { domNode: cvs , timeoutID , props , shouldCleanUp } = getState( )
+  if( timeoutID ){
+    window.clearTimeout( timeoutID );
+    setState({ timeoutID: null })
+  }
+  if( shouldCleanUp ){
+    callOnCleanUp( props.engine , cvs );
+    setState({ shouldCleanUp: false })
+  }
+  resetClasses( cvs )
+  setDefaultSize( cvs )
+  callOnThumbnail( props.engine , cvs );
+}
+
+const createHandleGrow = ( getState , setState ) => function( ) {
+  const { domNode: cvs , props } = getState( )
+  setGrowSize(cvs)
+  callOnThumbnail( props.engine , cvs );
+  toggleCanvasGrow(cvs)
+  setState({
+    timeoutID: window.setTimeout( ( ) => {
+      setState({ shouldCleanUp: true })
+      callOnLoad( props.engine , cvs );
+      callOnStart( props.engine , cvs );
+    }, 1100 )
+  })
+}
+
+const createHandleShrink = ( getState , setState ) => function( ) {
+  const { timeoutID , domNode } = getState( )
+  if( timeoutID ){
+    window.clearTimeout( timeoutID );
+    setState({
+      timeoutID: null,
+    })
+  }
+  toggleCanvasShrink(domNode)
+}
+
+const createHandleClick = ( getState , setState ) => function( e ){
+  const { props } = getState( )
+  if( props.onClick ){
+    props.onClick( getState( ) )
+  }
+}
+
+const Canvas = ( props ) => {
+
+  const { getState , setState } = createState({
+    shouldCleanUp: false,
+    timeoutID: null,
+    domNode: null,
+    props,
+  })
+
+  if( props.index === undefined && props.index === null ){
+    console.warn("Each canvas must have an unique index prop");
+  }
+
+  const optional = props.index !== undefined && props.index !== null ? { id: `canvas_${props.index}` , "data-index": props.index } : { } ;
+
+  const domNode = DOM.canvas({
+    ...optional,
+    className: "canvas" ,
+    width:"90" ,
+    height: "90",
+    onMount: createHandleMount( getState , setState ),
+    onReset: createHandleReset( getState , setState ),
+    onGrow: createHandleGrow( getState , setState ),
+    onShrink: createHandleShrink( getState , setState ),
+    onClick: createHandleClick( getState , setState ),
+    extraProps: {
+      shouldResize: ( ) => { console.warn("Resize functionality is not stable") },
+    },
+  })
+
+  setState({
+    domNode,
+  })
+
+  return domNode
+}
+
+export default Canvas
