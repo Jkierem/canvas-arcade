@@ -101,7 +101,6 @@ const attachSpecialEvents = ( node , props ) => {
   SPECIAL_EVENTS
     .map( compose( getOnEventName , getName ) )
     .filter( isDefinedIn(props) )
-    // .map( e => { console.log("Event" , e , ) ; return e })
     .forEach( e => attachSpecialEvent(props[e])(e) )
 }
 
@@ -110,7 +109,7 @@ const attachObserver = ( node ) => {
     mutationList
       .filter( mutation => mutation.type === "childList" )
       .flatMap( mapAddedNodesToArray )
-      .forEach( node => callOnMount(node) )
+      .forEach( callOnMount )
     observer.disconnect( )
   }
   const observer = new MutationObserver(callback)

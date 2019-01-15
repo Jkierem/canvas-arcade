@@ -95,7 +95,7 @@ const Canvas = ( props ) => {
     console.warn("Each canvas must have an unique index prop");
   }
 
-  const optional = props.index !== undefined && props.index !== null ? { id: `canvas_${props.index}` , "data-index": props.index } : { } ;
+  const optional = props.index !== undefined && props.index !== null ? { id: `canvas_${props.index}` } : { } ;
 
   const domNode = DOM.canvas({
     ...optional,
@@ -112,9 +112,7 @@ const Canvas = ( props ) => {
     },
   })
 
-  setState({
-    domNode,
-  })
+  setState({ domNode })
 
   return domNode
 }

@@ -43,9 +43,7 @@ const CanvasManager = ({ engines }) => {
   })
 
   setState({ canvasses: canvasContainer })
-  return DOM.div( {
-    className: "container",
-  } , canvasContainer )
+  return DOM.div({ className: "container" } , canvasContainer )
 }
 
 export default CanvasManager
